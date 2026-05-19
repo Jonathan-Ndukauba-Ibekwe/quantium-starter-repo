@@ -2,7 +2,8 @@
 # visit http://127.0.0.1:8050/ in your web browser.
 
 
-from dash import Dash, html, dcc
+from dash import Dash, html, dcc, Input, Output, callback
+from flask import Flask
 import plotly.express as px
 import pandas as pd
 import csv
@@ -61,7 +62,9 @@ df = pd.DataFrame({
     "East": East,
     "West": West
 })
-fig = px.line(df, x="Date", y=["North", "South", "East", "West"], title='Daily Revenue From 2018 to 2022 on Every Region')
+All = ["North", "South", "East", "West"]
+regionSelector = All
+fig = px.line(df, x="Date", y=regionSelector, title='Daily Revenue From 2018 to 2022 on Every Region')
 
 
 
@@ -78,8 +81,25 @@ app.layout = html.Div(children=[
     dcc.Graph(
         id='example-graph',
         figure=fig
+    ),
+
+    dcc.RadioItems(
+        id='region-selector',
+        options=["North", "South", "East", "West", "All"],
+        value="All",
+        inline=True
     )
 ])
+
+@callback(
+    Output('example-graph', 'figure'),
+    Input('region-selector', 'value')
+)
+def update_graph(selected_regions):
+    if selected_regions == "All":
+        selected_regions = All
+    new_fig = px.line(df, x="Date", y=selected_regions, title='Daily Revenue From 2018 to 2022 on Every Region')
+    return new_fig
 
 if __name__ == '__main__':
     app.run(debug=True)
