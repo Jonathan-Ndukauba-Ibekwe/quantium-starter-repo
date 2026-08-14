@@ -1,26 +1,19 @@
-from dash import Dash, dcc, html, Input, Output, callback
+from contextvars import copy_context
+from dash._callback_context import context_value
+from dash._utils import AttributeDict
 
-app = Dash()
+# Import the names of callback functions you want to test
+from Dash_app import display, update
 
-app.layout = html.Div([
-    html.H6("Change the value in the text box to see callbacks in action!"),
-    html.Div([
-        "Input: ",
-        dcc.Input(id='my-input', value='initial value', type='text')
-    ]),
-    html.Br(),
-    html.Div(id='my-output'),
+def test_update_callback():
+    output = update(1, 0)
+    assert output == 'button 1: 1 & button 2: 0'
 
-])
+def test_display_callback():
+    def run_callback():
+        context_value.set(AttributeDict(**{"triggered_inputs": [{"prop_id": "btn-1-ctx-example.n_clicks"}]}))
+        return display(1, 0, 0)
 
-
-@callback(
-    Output(component_id='my-output', component_property='children'),
-    Input(component_id='my-input', component_property='value')
-)
-def update_output_div(input_value):
-    return f'Output: {input_value}'
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
+    ctx = copy_context()
+    output = ctx.run(run_callback)
+    assert output == f'You last clicked button with ID btn-1-ctx-example'
